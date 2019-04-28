@@ -16,7 +16,7 @@ def main():
     """
     
     
-#     classicalChannelTest()
+    classicalChannelTest()
     quantumChannelTest()
     pass
 
@@ -28,7 +28,7 @@ def classicalChannelTest():
     print("Sent message: " +message)
   
     
-    received_message = cl_chan_test.recieve()
+    received_message = cl_chan_test.receive()
     if (message == received_message):
         print("Received message: " + received_message)
         print("Sucessful communication")
@@ -43,14 +43,34 @@ def quantumChannelTest():
     count = 0
     length =10
     sent_photons = [None] *length
+    received_photons = [None] *length
     
     for count in range (0,length):
         newPhoton = Photon(np.pi/4*(random.randint(0,3))) 
-        sent_photons[count] = newPhoton
         qu_chan_test.send(newPhoton)
+        sent_photons[count] = newPhoton
         count+=1
     
-    print(qu_chan_test.recieve())  
+    
+    count=0
+    while qu_chan_test.queue.__len__()>=1:
+        received_photons[count]=qu_chan_test.receive()
+        count+=1
+    
+    count=0
+    noLoss= True
+    for count in range (0,length):
+        if(received_photons[count]==sent_photons[count]):
+            pass
+        else:
+            print("Sent photons and received photons are different!")
+            noLoss = False
+        count+=1
+    
+    if(noLoss):
+        print("All photons were sucesfully sent")
+    else:
+        pass
     
     pass
     
