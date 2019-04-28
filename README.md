@@ -1,2 +1,2 @@
 # qkd
-QKD with protocol BB84
+Python code to simulate quantum key distribution bb84 protocol. Right now ideal, with no losses, and no eve
