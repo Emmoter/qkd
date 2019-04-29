@@ -7,10 +7,9 @@ Created on Wed Apr 24 17:23:54 2019
 import numpy as np
 import random
 from photon import M
-from channels import QuantumChannel
-from channels import ClassicalChannel
 
 # TODO make superclass for Sender and Receiver
+
 
 class Sender(object):
     """
@@ -24,13 +23,11 @@ class Sender(object):
     """
 
     def __init__(self, name='sender', key=[], sending_bases=[],
-                 photon_src=None, qu_chan=None, cl_chan=None):
+                 photon_src=None):
         self.name = name
         self.key = key
         self.sending_bases = sending_bases
         self.photon_src = photon_src
-        self.qu_chan = qu_chan
-        self.cl_chan = cl_chan
 
     def generate_initial_key(self, length):
         self.key = generate_rand_bits(length)
@@ -39,55 +36,40 @@ class Sender(object):
     def generate_sending_bases(self, length):
         self.sending_bases = generate_rand_bases(length)
         return
-    
-    def send_photons(self):
-        q = self.qu_chan
-        for bit in self.key:
-            q.send()  # TODO finish
-        return
-    
-    def print_state(self):
-        state_str = list()
-        
-        state_str.append('{}:'.format(self.name))
-        state_str.append('\tKey: {}'.format(self.key))
-        state_str.append('\tBases: {}'.format(self.sending_bases))
-        
-        state_str = '\n'.join(state_str)
-        print(state_str)
-        
-        return
+
+    def send_photons(self, quantum_channel):
+        photons_to_gen_info = list(zip(self.key, self.sending_bases))
+        generated_photons = []
+        for bit, basis in zip(self.key, self.sending_bases):
+            photon = self.generate_photon(bit, basis)
+            quantum_channel.send(photon)
+            generated_photons.append(self.generate_photon(bit, basis))  # not physical
+        return generated_photons
+
+    def generate_photon(self, bit, basis):
+        return self.photon_src.generate_photon(bit, basis)
 
 
 class Receiver(object):
     def __init__(self, name='receiver', key=[], receiving_bases=[],
-                 photon_detector=None, qu_chan=None, cl_chan=None):
+                 photon_detector=None):
         self.name = name
         self.key = key
         self.receiving_bases = receiving_bases
         self.photon_detector = photon_detector
-        self.qu_chan = qu_chan
-        self.cl_chan = cl_chan
 
     def generate_receiving_bases(self, length):
         self.receiving_bases = generate_rand_bases(length)
         return
-    
-    def receive_photons(self):
-        pass
+
+    def receive_photons(self, quantum_channel):
+        for i in range(0, len(self.receiving_bases)):
+            photon = quantum_channel.receive()
+            self.key[i] = self.detect_photon(photon, self.receiving_bases[i])
         return
 
-    def print_state(self):
-        state_str = list()
-        
-        state_str.append('{}:'.format(self.name))
-        state_str.append('\tKey: {}'.format(self.key))
-        state_str.append('\tBases: {}'.format(self.receiving_bases))
-        
-        state_str = '\n'.join(state_str)
-        print(state_str)
-        
-        return
+    def detect_photon(self, photon, basis):
+        return self.photon_detector.detect_photon(photon, basis)
 
 
 class Adversary(object):
@@ -101,7 +83,7 @@ def generate_rand_bits(length):
 
 
 def generate_rand_bases(length):
-    randBases = random.choice([M(0), M(45)], k=length)
+    randBases = random.choices([M(0), M(45)], k=length)
     return randBases
 
 

@@ -43,8 +43,8 @@ class Photon(object):
         #TODO is there a better type to restrict value to 0 or 1 (without
         logic connotation of boolean)
     """
-    def measure(self, alpha):
-        m = M(alpha).matrix
+    def measure(self, basis):
+        m = basis.matrix
         p = [calc_meas_prob(self.state_vector, meas_vec) for meas_vec in m.T]
         outcome = random.choices([0, 1], weights=[p[0], p[1]])[0]
         self.state_vector = m[:, [outcome]]
@@ -52,12 +52,35 @@ class Photon(object):
         return outcome
 
     def __str__(self):
-        """Compute printable representation"""
+        """Compute readable representation"""
+        # return self.arrow()
+        return self.arrow()
+
+    def __repr__(self):
+        """Compute 'official' string representation"""
         string = 'polarisation angle:\n{} {}\n'.format(np.degrees(self.theta),
                                                        self.arrow())
         string += 'state vector:\n{}'.format(self.state_vector)
-        return string
+        # return string
+        return self.__str__()
 
+    def tabl(self):
+        return '{:.0f}'.format(self.get_angle())
+# =============================================================================
+#         w = w
+#         if np.isclose(self.theta, 0):
+#             return '{:^{width}}'.format('⇓', width=w)
+#         elif np.isclose(self.theta, np.pi/2):
+#             return '{:^{width}}'.format('⇑', width=w)
+#         elif np.isclose(self.theta, np.pi/4):
+#             return '{:^{width}}'.format('⇗', width=w)
+#         elif np.isclose(self.theta, 3*np.pi/4):
+#             return '{:^{width}}'.format('⇖', width=w)
+#         else:
+#             return self.get_angle()
+# =============================================================================
+
+        
     def arrow(self):
         """Return UTF-8 arrow for photons in basis states"""
         if np.isclose(self.theta, 0):
@@ -69,13 +92,16 @@ class Photon(object):
         elif np.isclose(self.theta, 3*np.pi/4):
             return '⭦'
         else:
-            return ''
+            return self.get_angle()
+
+    def get_angle(self):
+        return np.degrees(self.theta)
 
 
 class M(object):
-    def __init__(self, angle):
-        self.angle = np.deg2rad(angle)
-        self.matrix = self.m_alpha(angle)
+    def __init__(self, alpha):
+        self.angle = np.deg2rad(alpha)
+        self.matrix = self.m_alpha(alpha)
         self.char = self.to_char(self.angle)
 
     def m_alpha(self, alpha):
@@ -91,6 +117,12 @@ class M(object):
         else:
             return ''
 
+    def get_angle(self):
+        return np.degrees(self.angle)
+
+    def __str__(self):
+        return self.char
+
     def __repr__(self):
         return self.char
 
@@ -105,7 +137,7 @@ def calc_meas_prob(psi, m):
 
 def calc_polarisation_angle(psi):
     """ Calculate polarisation angle of state vector psi"""
-    return np.arccos(np.dot(psi.T, np.array([[1, 0]]).T))
+    return np.arccos(np.dot(psi.T, np.array([[1, 0]]).T)).item()
 
 
 if __name__ == '__main__':
@@ -120,13 +152,14 @@ if __name__ == '__main__':
     N = 1000    # number of experiments
     theta = 0   # photon polarisation
     alpha = 45  # measurement basis polarisation
+    m = M(alpha)
     s = 0       # sum of outcomes (for calculating average)
     for i in range(N):
         photon = Photon(theta)
-        s += photon.measure(alpha)
+        s += photon.measure(m)
 
     avg_outcome = s/N
     print('\nMeasurement test:')
-    print('{}\nM({})\n{} trials'.format(Photon(theta).arrow(), alpha, N))
+    print('{}\nM({}): {}\n{} trials'.format(Photon(theta).arrow(),
+                                            m.get_angle(), m.char, N))
     print('Average outcome: {}'.format(avg_outcome))
-    print(photon)
